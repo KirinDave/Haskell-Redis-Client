@@ -1,5 +1,5 @@
 Name:                redis
-Version:             0.11
+Version:             0.12
 License:             MIT
 Maintainer:          Alexander Bogdanov <andorn@gmail.com>
 Author:              Alexander Bogdanov <andorn@gmail.com>
@@ -65,12 +65,14 @@ Extra-Source-Files: Test.hs,
 
 Library
     Build-Depends:       base < 5, containers, bytestring, utf8-string,
-                         network, mtl, old-time, MonadCatchIO-mtl, parsec
+                         network, mtl, old-time, MonadCatchIO-mtl, parsec, enumerator,
+                         monadIO
     Exposed-modules:     Database.Redis.Redis
                          Database.Redis.Monad
                          Database.Redis.ByteStringClass
                          Database.Redis.Monad.State
                          Database.Redis.Utils.Lock
                          Database.Redis.Utils.Monad.Lock
+                         Data.Enumerator.Redis
     Other-modules:       Database.Redis.Internal
                          Database.Redis.Info

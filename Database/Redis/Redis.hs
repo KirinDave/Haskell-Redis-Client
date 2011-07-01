@@ -110,12 +110,14 @@ import Data.ByteString (ByteString)
 import Data.Maybe (fromJust, isNothing)
 import Data.List (intersperse)
 import qualified Data.Map as Map
+
 import Control.Monad (when)
 import Control.Exception (onException)
 
 import Database.Redis.ByteStringClass
 import Database.Redis.Info
 import Database.Redis.Internal
+
 
 -- | default Redis port
 defaultPort :: String
@@ -1705,6 +1707,7 @@ listen r timeout = withState r $ \rs -> if isSubscribed rs == 0
                                                 if ready
                                                   then recv rs >>= parseMessage >>= return . Just
                                                   else return Nothing
+  
 
 {- UNTESTED -}
 -- | Save the whole dataset on disk

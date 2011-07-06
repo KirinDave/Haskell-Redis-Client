@@ -1,19 +1,24 @@
 module Data.Enumerator.Redis (enumSubscriptions) where
        
 import Database.Redis.Redis       
-import Data.Enumerator ((>>==), Enumerator, Stream(..), Step(..), returnI)
-import Data.Maybe (maybeToList)
+import Data.Enumerator ((>>==), Enumerator, Stream(..), continue, checkContinue0)
+import Data.Maybe (fromMaybe)
 import Control.Concurrent.MonadIO (MonadIO, liftIO)
 import Database.Redis.ByteStringClass
+import qualified Data.ByteString as B
+
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, FunctionalDependencies,
+  FlexibleContexts, OverloadedStrings #-}
+
 
 
 enumSubscriptions :: (BS s, MonadIO m) =>
-                          Redis 
-                       -> Int
-                       -> Enumerator (Message s) m b
-enumSubscriptions rs timeout (Continue k) = do
-  nextRead <- liftIO $ listen rs timeout;
-  let chunk = Chunks $ maybeToList nextRead in
-    k chunk >>== subscriptionEnumerator rs timeout
-subscriptionEnumerator rs timeout step = returnI step
+                     Int
+                     -> Redis 
+                     -> Enumerator (Message s) m b
+enumSubscriptions timeout rs = checkContinue0 $ \loop k -> 
+  do nextRead <- liftIO $ listen rs timeout;
+     case nextRead of
+       Nothing -> k (Chunks [])  >>== loop
+       Just x  -> k (Chunks [x]) >>== loop
       

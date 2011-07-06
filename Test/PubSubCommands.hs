@@ -1,11 +1,17 @@
 module Test.PubSubCommands where
 
 import Test.Setup
+import qualified Control.Concurrent.Chan.Strict as C
+import qualified Data.Enumerator as E
+import qualified Data.Enumerator.List as EL
+import Data.Enumerator.Redis
+import System.Timeout
 
 tests = TList [TLabel "subscribe and unsubscribe" test_subscribe_unsubscribe,
                TLabel "psubscribe and punsubscribe" test_psubscribe_punsubscribe,
                TLabel "publish and listen" test_publish_listen,
-               TLabel "publish and listen for psubscribe" test_publish_listen_p]
+               TLabel "publish and listen for psubscribe" test_publish_listen_p,
+               TLabel "enumerating subscribed channels." test_sub_enumerator]
 
 test_subscribe_unsubscribe = TCase $ testRedis $
     do r <- ask
@@ -75,3 +81,19 @@ test_publish_listen_p = TCase $ testRedis2 $
                    assertEqual "" (Just $ MPMessage "f*" "foot" "football") msg
                    takeMVar v >>= assertEqual "" 2
                    (listen r1 500 :: IO (Maybe (Message String))) >>= assertEqual "" Nothing
+
+
+test_sub_enumerator = TCase $ testRedis2 $
+    do redSub <- ask
+       redPub <- ask2
+       liftIO $ do subscribe redSub ["test:channel"] :: IO [Message ()]
+                   replicateM_ 5 $ publish redPub "test:channel" "Yes"
+                   result <- timeout 2000 $ E.run (enumSubscriptions 50 redSub E.$$ EL.take 5) :: IO (Maybe (Either SomeException [Message String]))
+                   case result of 
+                     Just (Right _) -> return ()
+                     _              -> assertFailure "Failed to enumerate subscription."
+                                       
+                     
+         
+       
+       
